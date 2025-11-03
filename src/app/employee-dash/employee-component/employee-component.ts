@@ -1,18 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { EmployeeComponentService, EmployeeData, ChartType } from './employee-component-service';
 import { ColDef, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import { AgChartOptions } from 'ag-charts-community';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-interface EmployeeData {
-  employee: string;
-  department: string;
-  tasksCompleted: number;
-  tasksPending: number;
-}
-
-type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'donut';
 
 @Component({
   selector: 'app-employee-component',
@@ -23,7 +14,7 @@ type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'donut';
 export class EmployeeComponent implements OnInit {
   rowData: EmployeeData[] = [];
   currentChartType: ChartType = 'bar';
-  chartOptions: AgChartOptions = {}
+  chartOptions: AgChartOptions = {};
 
   colDefs: ColDef[] = [
     { field: 'employee', headerName: 'Employee' },
@@ -32,19 +23,35 @@ export class EmployeeComponent implements OnInit {
     { field: 'tasksPending', headerName: 'Tasks Pending' }
   ];
 
+  // Statistics properties
+  totalCompleted: number = 0;
+  totalPending: number = 0;
+  employeesByDepartment: { [key: string]: EmployeeData[] } = {};
 
-  constructor(private http: HttpClient) { }
+  constructor(private employeeService: EmployeeComponentService) { }
 
   ngOnInit() {
-    this.http.get<EmployeeData[]>('assets/data.json').subscribe({
+    this.loadEmployeeData();
+  }
+
+  private loadEmployeeData() {
+    this.employeeService.getEmployeeData().subscribe({
       next: (data) => {
         this.rowData = data;
         this.updateChart(this.currentChartType);
+        this.calculateStatistics();
       },
       error: (error) => {
-        console.error('Error loading data from file, using hardcoded data:', error);
+        console.error('Error loading data:', error);
+        // No fallback data - just log the error
       }
     });
+  }
+
+  private calculateStatistics() {
+    this.totalCompleted = this.employeeService.getTotalTasksCompleted(this.rowData);
+    this.totalPending = this.employeeService.getTotalTasksPending(this.rowData);
+    this.employeesByDepartment = this.employeeService.getEmployeesByDepartment(this.rowData);
   }
 
   switchChart(type: ChartType) {
@@ -56,175 +63,16 @@ export class EmployeeComponent implements OnInit {
     return this.currentChartType === type;
   }
 
-
   private updateChart(type: ChartType) {
-    switch (type) {
-      case 'bar':
-        this.chartOptions = this.getBarChartOptions();
-        break;
-      case 'line':
-        this.chartOptions = this.getLineChartOptions();
-        break;
-      case 'area':
-        this.chartOptions = this.getAreaChartOptions();
-        break;
-      case 'pie':
-        this.chartOptions = this.getPieChartOptions();
-        break;
-      case 'donut':
-        this.chartOptions = this.getDonutChartOptions();
-        break;
-    }
+    this.chartOptions = this.employeeService.getChartOptions(type, this.rowData);
   }
 
-
-
-
-  private getBarChartOptions(): AgChartOptions {
-    return {
-      title: { text: 'Employee Tasks Performance' },
-      data: this.rowData,
-      series: [
-        {
-          type: 'bar',
-          xKey: 'employee',
-          yKey: 'tasksCompleted',
-          yName: 'Tasks Completed',
-          label: { enabled: true, color: 'black', fontWeight: 'bold' }
-        },
-        {
-          type: 'bar',
-          xKey: 'employee',
-          yKey: 'tasksPending',
-          yName: 'Tasks Pending',
-          label: { enabled: true, color: 'black', fontWeight: 'bold' }
-        }
-      ],
-      axes: [
-        {
-          position: 'bottom',
-          type: 'category',
-          title: { text: 'Employee' }
-        },
-        {
-          position: 'left',
-          type: 'number',
-          title: { text: 'Tasks' }
-        }
-      ]
-    };
+  // Utility methods for template
+  getDepartmentNames(): string[] {
+    return Object.keys(this.employeesByDepartment);
   }
 
-  private getLineChartOptions(): AgChartOptions {
-    return {
-      title: { text: 'Employee Tasks Trend' },
-      data: this.rowData,
-      series: [
-        {
-          type: 'line',
-          xKey: 'employee',
-          yKey: 'tasksCompleted',
-          yName: 'Task Completed',
-          marker: { enabled: true}
-        },
-        {
-          type: 'line',
-          xKey: 'employee',
-          yKey: 'tasksPending',
-          yName: 'Tasks Pending',
-          marker: { enabled: true}
-        }
-      ],
-      axes: [
-        {
-          position: 'bottom',
-          type: 'category',
-          title: { text: 'Employee'}
-        },
-        {
-          position: 'left',
-          type: 'number',
-          title: {text: 'Tasks'}
-        }
-      ]
-    }
+  getEmployeeCountByDepartment(department: string): number {
+    return this.employeesByDepartment[department]?.length || 0;
   }
-
-  private getAreaChartOptions(): AgChartOptions {
-    return {
-      title: { text: 'Employee Tasks Overview' },
-      data: this.rowData,
-      series: [
-        {
-          type: 'area',
-          xKey: 'employee',
-          yKey: 'tasksComleted',
-          yName: 'Tasks Completed',
-          marker: { enabled: false },
-        },
-        {
-          type: 'area',
-          xKey: 'employee',
-          yKey: 'tasksPending',
-          yName: 'Tasks Pending',
-          marker: { enabled: false }
-        }
-      ],
-      axes: [
-        {
-          position: 'bottom',
-          type: 'category',
-          title: { text: 'Employee' }
-        },
-        {
-          position: 'left',
-          type: 'number',
-          title: { text: 'Tasks' }
-        }
-      ]
-    };
-  }
-
-
-  private getPieChartOptions(): AgChartOptions {
-    return {
-      title: { text: 'Tasks Completed by Employee' },
-      data: this.rowData,
-      series: [
-        {
-          type: 'pie',
-          angleKey: 'tasksCompleted',
-          calloutLabelKey: 'employee',
-          sectorLabelKey: 'tasksCompleted',
-          sectorLabel: {
-            formatter: ({value}) => `${value} tasks` 
-          }
-        }
-      ]
-  };
-  }
-
-  private getDonutChartOptions(): AgChartOptions {
-    return {
-      title: { text: 'Tasks Pending by Employee' },
-      data: this.rowData,
-      series: [
-        {
-          type: 'donut',
-          angleKey: 'tasksPending',
-          calloutLabelKey: 'employee',
-          sectorLabelKey: 'tasksPending',
-          sectorLabel: {
-            formatter: ({value}) => `${value} tasks`
-          },
-          innerRadiusOffset: -40
-        }
-      ]
-    }
-  }
-
- 
-  }
-
-
-
+}
