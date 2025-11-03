@@ -1,0 +1,32 @@
+[
+  {
+    "employee": "Alice",
+    "department": "Development",
+    "tasksCompleted": 45,
+    "tasksPending": 5
+  },
+  {
+    "employee": "Brian",
+    "department": "Design",
+    "tasksCompleted": 38,
+    "tasksPending": 12
+  },
+  {
+    "employee": "Cindy",
+    "department": "QA",
+    "tasksCompleted": 50,
+    "tasksPending": 2
+  },
+  {
+    "employee": "David",
+    "department": "Development",
+    "tasksCompleted": 40,
+    "tasksPending": 10
+  },
+  {
+    "employee": "Ella",
+    "department": "Design",
+    "tasksCompleted": 30,
+    "tasksPending": 15
+  }
+]

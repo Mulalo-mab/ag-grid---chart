@@ -1,0 +1,46 @@
+<div class="container mt-3">
+  <h2 class="text-center mb-3">Employee Perfomance DashBoard</h2>
+
+
+  <ag-grid-angular class="ag-theme-alpine"
+                   style="height: 300px; width: 100%;"
+                   [rowData]="rowData"
+                   [columnDefs]="colDefs">
+  </ag-grid-angular>
+
+  <br />
+
+  <div class="chart-buttons">
+    <button (click)="switchChart('bar')"
+            class="chart-btn"
+            [class.active]="isActiveChart('bar')">
+      Bar Chart
+    </button>
+    <button (click)="switchChart('line')"
+            class="chart-btn"
+            [class.active]="isActiveChart('line')">
+      Line Chart
+    </button>
+    <button (click)="switchChart('area')"
+            class="chart-btn"
+            [class.active]="isActiveChart('area')">
+      Area Chart
+    </button>
+    <button (click)="switchChart('pie')"
+            class="chart-btn"
+            [class.active]="isActiveChart('pie')">
+      Pie Chart
+    </button>
+    <button (click)="switchChart('donut')"
+            class="chart-btn"
+            [class.active]="isActiveChart('donut')">
+      Donut Chart
+    </button>
+  </div>
+
+  <div class="chart-wrapper">
+  <ag-charts [options]="chartOptions"
+             style="height: 500px; width: 100%;">
+  </ag-charts>
+</div>
+  </div>
